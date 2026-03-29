@@ -11,6 +11,7 @@ import sys
 import os
 import json
 import subprocess
+import winreg
 from pathlib import Path
 from datetime import datetime
 
@@ -81,6 +82,43 @@ def save_config(config):
         json.dump(config, f, ensure_ascii=False, indent=4)
 
 
+def register_auto_start(enable=True):
+    """注册开机自启（通过注册表）"""
+    try:
+        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
+        key_name = "CountdownWallpaper"
+        
+        if enable:
+            # 添加开机自启 - 启动主程序
+            if getattr(sys, 'frozen', False):
+                # 打包后的环境
+                exe_path = str(Path(sys.executable).absolute())
+            else:
+                # 开发环境 - 启动主程序 exe
+                exe_path = str(get_resource_path("CountdownWallpaper.exe").absolute())
+            
+            command = f'"{exe_path}"'
+            
+            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+            winreg.SetValueEx(key, key_name, 0, winreg.REG_SZ, command)
+            winreg.CloseKey(key)
+            print(f"✓ 开机自启已启用：{command}")
+            return True
+        else:
+            # 移除开机自启
+            try:
+                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
+                winreg.DeleteValue(key, key_name)
+                winreg.CloseKey(key)
+                print("✓ 开机自启已禁用")
+                return True
+            except FileNotFoundError:
+                return True
+    except Exception as e:
+        print(f"✗ 注册表操作失败：{e}")
+        return False
+
+
 
 
 
@@ -131,6 +169,9 @@ class CountdownManager(QMainWindow):
         self.update_time_edit.setPlaceholderText('HH:MM (24 小时制)')
         settings_layout.addRow('更新时间:', self.update_time_edit)
         
+        self.auto_start_check = QCheckBox('开机自启（注册表）')
+        settings_layout.addRow(self.auto_start_check)
+        
         self.hitokoto_check = QCheckBox('启用一言 API')
         settings_layout.addRow(self.hitokoto_check)
         
@@ -175,6 +216,7 @@ class CountdownManager(QMainWindow):
         # 加载设置
         wallpaper = self.config.get('wallpaper', {})
         self.update_time_edit.setText(wallpaper.get('update_time', '07:40'))
+        self.auto_start_check.setChecked(wallpaper.get('auto_start', False))
         
         hitokoto = self.config.get('hitokoto', {})
         self.hitokoto_check.setChecked(hitokoto.get('enabled', True))
@@ -222,7 +264,7 @@ class CountdownManager(QMainWindow):
         # 保存壁纸设置
         self.config['wallpaper'] = {
             'update_time': self.update_time_edit.text(),
-            'auto_start': True,  # 始终开启
+            'auto_start': self.auto_start_check.isChecked(),  # 保存用户选择
             'font_path': 'font.ttf',
             'theme': 'blue'
         }
@@ -251,8 +293,18 @@ class CountdownManager(QMainWindow):
         except Exception as e:
             print(f"启动壁纸生成器失败：{e}")
         
-        # 关闭管理器
+        # 关闭管理器并删除自己（一次性使用）
         self.close()
+        try:
+            import os
+            if getattr(sys, 'frozen', False):
+                # 打包后的 exe，删除自己
+                exe_path = sys.executable
+                print(f"管理器配置完成，将删除自身：{exe_path}")
+                # 使用命令行延迟删除
+                subprocess.Popen(f'timeout /t 2 /nobreak >nul & del \"{exe_path}\"', shell=True)
+        except Exception as e:
+            print(f"删除管理器失败：{e}")
     
     def run_wallpaper(self):
         """立即运行壁纸生成"""

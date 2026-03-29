@@ -73,6 +73,7 @@ def start_manager():
             print("使用 exe 版管理器")
             subprocess.Popen([str(manager_exe)])
             print("配置管理器已启动，请完成配置后关闭管理器")
+            print("提示：配置完成后管理器将自动删除，下次启动直接生成壁纸")
         except Exception as e:
             print(f"启动管理器失败：{e}")
     else:
