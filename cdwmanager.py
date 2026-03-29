@@ -91,8 +91,9 @@ def register_auto_start(enable=True):
         if enable:
             # 添加开机自启 - 启动主程序
             if getattr(sys, 'frozen', False):
-                # 打包后的环境
-                exe_path = str(Path(sys.executable).absolute())
+                # 打包后的环境 - 获取管理器所在目录，然后指向同目录的 CountdownWallpaper.exe
+                manager_dir = Path(sys.executable).parent
+                exe_path = str((manager_dir / "CountdownWallpaper.exe").absolute())
             else:
                 # 开发环境 - 启动主程序 exe
                 exe_path = str(get_resource_path("CountdownWallpaper.exe").absolute())
