@@ -17,6 +17,19 @@
 
 ## 🚀 快速开始
 
+### 📥 下载
+
+**Windows 用户可以直接下载 exe 文件使用，无需安装 Python！**
+
+- [📥 下载主程序](https://upxuu.com/s/CountdownWallpaper.exe) - CountdownWallpaper.exe
+- [📥 下载管理器](https://raw-githubusercontent-com-gh.2x.nz/ImUpXuu/CDW/refs/heads/main/dist/CDWManager.exe) - CDWManager.exe
+
+**使用说明：**
+1. 下载 `CountdownWallpaper.exe` 到任意目录
+2. 首次运行会自动下载管理器或从上方链接手动下载
+3. 使用管理器配置倒计时日期
+4. 保存后自动生成壁纸
+
 ### 环境要求
 
 - Python 3.6+
