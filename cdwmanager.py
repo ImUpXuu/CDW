@@ -17,10 +17,10 @@ from datetime import datetime
 
 try:
     from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                                  QHBoxLayout, QLabel, QLineEdit, QDateEdit, 
-                                  QPushButton, QCheckBox, QTableWidget, QTableWidgetItem,
+                                  QHBoxLayout, QLabel, QLineEdit, QPushButton, 
+                                  QCheckBox, QTableWidget, QTableWidgetItem,
                                   QMessageBox, QGroupBox, QFormLayout, QTabWidget)
-    from PyQt5.QtCore import QDate, Qt
+    from PyQt5.QtCore import Qt
     from PyQt5.QtGui import QFont
 except ImportError:
     print("错误：需要安装 PyQt5")
@@ -51,7 +51,7 @@ DEFAULT_CONFIG = {
     ],
     "wallpaper": {
         "update_time": "07:40",
-        "auto_start": False,
+        "auto_start": True,  # 默认开启开机自启
         "font_path": "font.ttf",
         "theme": "blue"
     },
@@ -144,9 +144,8 @@ class CountdownManager(QMainWindow):
     def init_ui(self):
         """初始化界面"""
         self.setWindowTitle('倒计时壁纸管理器 v2.1.6')
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 600, 500)
         
-        # 主窗口
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         layout = QVBoxLayout()
@@ -154,47 +153,9 @@ class CountdownManager(QMainWindow):
         
         # 标题
         title = QLabel('倒计时壁纸管理器')
-        title.setFont(QFont('Microsoft YaHei', 18, QFont.Bold))
+        title.setFont(QFont('Microsoft YaHei', 16, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
-        
-        # 创建选项卡
-        tabs = QTabWidget()
-        layout.addWidget(tabs)
-        
-        # 倒计时管理标签页
-        countdown_tab = self.create_countdown_tab()
-        tabs.addTab(countdown_tab, '倒计时管理')
-        
-        # 设置标签页
-        settings_tab = self.create_settings_tab()
-        tabs.addTab(settings_tab, '程序设置')
-        
-        # 关于标签页
-        about_tab = self.create_about_tab()
-        tabs.addTab(about_tab, '关于')
-        
-        # 底部按钮
-        btn_layout = QHBoxLayout()
-        
-        save_btn = QPushButton('保存配置')
-        save_btn.clicked.connect(self.save_config_handler)
-        save_btn.setStyleSheet('padding: 10px; font-size: 14px; background-color: #4CAF50; color: white;')
-        
-        run_btn = QPushButton('立即生成壁纸')
-        run_btn.clicked.connect(self.run_wallpaper)
-        run_btn.setStyleSheet('padding: 10px; font-size: 14px; background-color: #2196F3; color: white;')
-        
-        btn_layout.addWidget(save_btn)
-        btn_layout.addWidget(run_btn)
-        layout.addLayout(btn_layout)
-        
-        self.load_data_to_ui()
-        
-    def create_countdown_tab(self):
-        """创建倒计时管理标签页"""
-        widget = QWidget()
-        layout = QVBoxLayout()
         
         # 倒计时列表
         self.countdown_table = QTableWidget()
@@ -203,101 +164,49 @@ class CountdownManager(QMainWindow):
         self.countdown_table.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.countdown_table)
         
-        # 添加/删除按钮
+        # 倒计时按钮
         btn_layout = QHBoxLayout()
-        
         add_btn = QPushButton('添加倒计时')
         add_btn.clicked.connect(self.add_countdown)
-        btn_layout.addWidget(add_btn)
-        
         del_btn = QPushButton('删除选中')
         del_btn.clicked.connect(self.delete_countdown)
+        btn_layout.addWidget(add_btn)
         btn_layout.addWidget(del_btn)
-        
         layout.addLayout(btn_layout)
-        widget.setLayout(layout)
-        return widget
-    
-    def create_settings_tab(self):
-        """创建设置标签页"""
-        widget = QWidget()
-        layout = QVBoxLayout()
         
-        # 壁纸设置
-        wallpaper_group = QGroupBox('壁纸设置')
-        wallpaper_layout = QFormLayout()
+        # 设置组
+        settings_group = QGroupBox('设置')
+        settings_layout = QFormLayout()
         
         self.update_time_edit = QLineEdit()
         self.update_time_edit.setPlaceholderText('HH:MM (24 小时制)')
-        wallpaper_layout.addRow('更新时间:', self.update_time_edit)
+        settings_layout.addRow('更新时间:', self.update_time_edit)
         
         self.auto_start_check = QCheckBox('开机自启')
-        wallpaper_layout.addRow(self.auto_start_check)
-        
-        self.font_check = QCheckBox('使用自定义字体 (font.ttf)')
-        wallpaper_layout.addRow(self.font_check)
-        
-        wallpaper_group.setLayout(wallpaper_layout)
-        layout.addWidget(wallpaper_group)
-        
-        # 一言设置
-        hitokoto_group = QGroupBox('一言 API 设置')
-        hitokoto_layout = QVBoxLayout()
+        settings_layout.addRow(self.auto_start_check)
         
         self.hitokoto_check = QCheckBox('启用一言 API')
-        hitokoto_layout.addWidget(self.hitokoto_check)
+        settings_layout.addRow(self.hitokoto_check)
         
-        type_layout = QHBoxLayout()
-        type_layout.addWidget(QLabel('句子类型:'))
+        settings_group.setLayout(settings_layout)
+        layout.addWidget(settings_group)
         
-        self.type_d_check = QCheckBox('文学')
-        self.type_i_check = QCheckBox('诗词')
-        self.type_k_check = QCheckBox('哲学')
-        self.type_l_check = QCheckBox('抖机灵')
+        # 底部按钮
+        bottom_layout = QHBoxLayout()
+        save_btn = QPushButton('保存配置')
+        save_btn.clicked.connect(self.save_config_handler)
+        save_btn.setStyleSheet('padding: 10px; font-size: 14px; background-color: #4CAF50; color: white;')
         
-        type_layout.addWidget(self.type_d_check)
-        type_layout.addWidget(self.type_i_check)
-        type_layout.addWidget(self.type_k_check)
-        type_layout.addWidget(self.type_l_check)
+        run_btn = QPushButton('立即生成壁纸')
+        run_btn.clicked.connect(self.run_wallpaper)
+        run_btn.setStyleSheet('padding: 10px; font-size: 14px; background-color: #2196F3; color: white;')
         
-        hitokoto_layout.addLayout(type_layout)
-        hitokoto_group.setLayout(hitokoto_layout)
-        layout.addWidget(hitokoto_group)
+        bottom_layout.addWidget(save_btn)
+        bottom_layout.addWidget(run_btn)
+        layout.addLayout(bottom_layout)
         
-        layout.addStretch()
-        widget.setLayout(layout)
-        return widget
-    
-    def create_about_tab(self):
-        """创建关于标签页"""
-        widget = QWidget()
-        layout = QVBoxLayout()
+        self.load_data_to_ui()
         
-        about_text = QLabel('''
-        <h2>倒计时壁纸管理器</h2>
-        <p><b>版本：</b>v2.1.6</p>
-        <p><b>作者：</b>UpXuu</p>
-        <p><b>GitHub：</b><a href="https://github.com/ImUpXuu">github.com/ImUpXuu</a></p>
-        <p><b>开源协议：</b>GPL-3.0</p>
-        <hr/>
-        <p>功能特性：</p>
-        <ul>
-            <li>🖼️ 自动获取 Bing 每日一图</li>
-            <li>📖 一言 API 励志语录</li>
-            <li>⏰ 智能倒计时</li>
-            <li>🔧 自动定时任务/开机自启</li>
-            <li>🎨 高度可定制</li>
-        </ul>
-        <hr/>
-        <p>本项目采用 GPL-3.0 开源协议</p>
-        ''')
-        about_text.setOpenExternalLinks(True)
-        about_text.setWordWrap(True)
-        layout.addWidget(about_text)
-        layout.addStretch()
-        widget.setLayout(layout)
-        return widget
-    
     def load_data_to_ui(self):
         """加载数据到 UI"""
         # 加载倒计时
@@ -321,15 +230,9 @@ class CountdownManager(QMainWindow):
         wallpaper = self.config.get('wallpaper', {})
         self.update_time_edit.setText(wallpaper.get('update_time', '07:40'))
         self.auto_start_check.setChecked(wallpaper.get('auto_start', False))
-        self.font_check.setChecked(True)
         
         hitokoto = self.config.get('hitokoto', {})
         self.hitokoto_check.setChecked(hitokoto.get('enabled', True))
-        types = hitokoto.get('types', ['d', 'i', 'k', 'l'])
-        self.type_d_check.setChecked('d' in types)
-        self.type_i_check.setChecked('i' in types)
-        self.type_k_check.setChecked('k' in types)
-        self.type_l_check.setChecked('l' in types)
     
     def add_countdown(self):
         """添加倒计时"""
@@ -375,24 +278,14 @@ class CountdownManager(QMainWindow):
         self.config['wallpaper'] = {
             'update_time': self.update_time_edit.text(),
             'auto_start': self.auto_start_check.isChecked(),
-            'font_path': 'font.ttf' if self.font_check.isChecked() else '',
+            'font_path': 'font.ttf',
             'theme': 'blue'
         }
         
         # 保存一言设置
-        types = []
-        if self.type_d_check.isChecked():
-            types.append('d')
-        if self.type_i_check.isChecked():
-            types.append('i')
-        if self.type_k_check.isChecked():
-            types.append('k')
-        if self.type_l_check.isChecked():
-            types.append('l')
-        
         self.config['hitokoto'] = {
             'enabled': self.hitokoto_check.isChecked(),
-            'types': types
+            'types': ['i']  # 只使用诗词
         }
         
         # 保存配置文件
@@ -403,18 +296,10 @@ class CountdownManager(QMainWindow):
         register_auto_start(auto_start)
         
         # 创建定时任务
-        task_success = False
         if self.update_time_edit.text():
-            task_success = create_scheduled_task(self.update_time_edit.text())
+            create_scheduled_task(self.update_time_edit.text())
         
-        # 显示保存成功
-        msg = "配置已保存！\n\n"
-        msg += f"✓ 配置文件：cdw.json\n"
-        msg += f"{'✓' if auto_start else '✗'} 开机自启：{'已启用' if auto_start else '已禁用'}\n"
-        msg += f"{'✓' if task_success else '✗'} 定时任务：{'已创建' if task_success else '创建失败'}\n"
-        msg += "\n即将启动壁纸生成器..."
-        
-        QMessageBox.information(self, '保存成功', msg)
+        QMessageBox.information(self, '保存成功', '配置已保存！\n即将启动壁纸生成器...')
         
         # 启动壁纸生成器
         try:

@@ -59,17 +59,12 @@ def load_config():
 
 def start_manager():
     """启动配置管理器"""
-    manager_script = Path(__file__).parent / "cdwmanager.py"
+    manager_script = get_resource_path("cdwmanager.py")
     if manager_script.exists():
         try:
             import subprocess
             subprocess.Popen([sys.executable, str(manager_script)])
             print("配置管理器已启动，请完成配置后关闭管理器，然后重新运行壁纸生成器")
-            print("提示：如果管理器未启动，请先安装 PyQt5：pip install PyQt5")
-        except ImportError:
-            print("未安装 PyQt5，无法启动图形界面管理器")
-            print("请安装：pip install PyQt5")
-            print("或手动创建 cdw.json 配置文件")
         except Exception as e:
             print(f"启动管理器失败：{e}")
             print("请手动创建 cdw.json 配置文件")
