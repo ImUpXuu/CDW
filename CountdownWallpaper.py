@@ -11,6 +11,7 @@ GitHub: https://github.com/ImUpXuu
 import os
 import sys
 import datetime
+import subprocess
 import requests
 from PIL import Image, ImageDraw, ImageFont
 import platform
