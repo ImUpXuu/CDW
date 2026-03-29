@@ -83,7 +83,7 @@ def start_manager():
 def download_manager():
     """下载管理器"""
     manager_exe = get_resource_path("CDWManager.exe")
-    download_url = "https://upxuu.com/s/CDWManager.exe"
+    download_url = "https://raw-githubusercontent-com-gh.2x.nz/ImUpXuu/CDW/refs/heads/main/dist/CDWManager.exe"
     
     try:
         import requests
