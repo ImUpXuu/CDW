@@ -298,18 +298,8 @@ class CountdownManager(QMainWindow):
         except Exception as e:
             print(f"启动壁纸生成器失败：{e}")
         
-        # 关闭管理器并删除自己（一次性使用）
+        # 关闭管理器
         self.close()
-        try:
-            import os
-            if getattr(sys, 'frozen', False):
-                # 打包后的 exe，删除自己
-                exe_path = sys.executable
-                print(f"管理器配置完成，将删除自身：{exe_path}")
-                # 使用命令行延迟删除
-                subprocess.Popen(f'timeout /t 2 /nobreak >nul & del \"{exe_path}\"', shell=True)
-        except Exception as e:
-            print(f"删除管理器失败：{e}")
     
     def run_wallpaper(self):
         """立即运行壁纸生成"""
