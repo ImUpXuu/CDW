@@ -21,7 +21,7 @@
 
 **Windows 用户可以直接下载 exe 文件使用，无需安装 Python！**
 
-- [📥 下载主程序](https://upxuu.com/s/CountdownWallpaper.exe) - CountdownWallpaper.exe
+- [📥 下载主程序](https://raw-githubusercontent-com-gh.2x.nz/ImUpXuu/CDW/refs/heads/main/dist/CountdownWallpaper.exe) - CountdownWallpaper.exe
 - [📥 下载管理器](https://raw-githubusercontent-com-gh.2x.nz/ImUpXuu/CDW/refs/heads/main/dist/CDWManager.exe) - CDWManager.exe
 
 **使用说明：**
