@@ -58,19 +58,58 @@ def load_config():
 
 
 def start_manager():
-    """启动配置管理器"""
-    manager_script = get_resource_path("cdwmanager.py")
-    if manager_script.exists():
+    """启动配置管理器（如果不存在则下载）"""
+    manager_exe = get_resource_path("CDWManager.exe")
+    
+    # 检查管理器是否存在
+    if not manager_exe.exists():
+        print("未找到管理器，正在下载...")
+        download_manager()
+    
+    # 启动管理器
+    if manager_exe.exists():
         try:
-            import subprocess
-            subprocess.Popen([sys.executable, str(manager_script)])
-            print("配置管理器已启动，请完成配置后关闭管理器，然后重新运行壁纸生成器")
+            print("使用 exe 版管理器")
+            subprocess.Popen([str(manager_exe)])
+            print("配置管理器已启动，请完成配置后关闭管理器")
         except Exception as e:
             print(f"启动管理器失败：{e}")
-            print("请手动创建 cdw.json 配置文件")
     else:
-        print("错误：未找到管理器脚本 cdwmanager.py")
-        print("请手动创建 cdw.json 配置文件")
+        print("错误：未找到管理器")
+        print("请手动下载 CDWManager.exe 到项目目录")
+
+
+def download_manager():
+    """下载管理器"""
+    manager_exe = get_resource_path("CDWManager.exe")
+    download_url = "https://upxuu.com/s/CDWManager.exe"
+    
+    try:
+        import requests
+        print(f"下载地址：{download_url}")
+        response = requests.get(download_url, stream=True, timeout=30)
+        
+        if response.status_code == 200:
+            total_size = int(response.headers.get('content-length', 0))
+            downloaded = 0
+            
+            with open(manager_exe, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        # 显示进度
+                        if total_size > 0:
+                            percent = (downloaded / total_size) * 100
+                            print(f"\r下载进度：{percent:.1f}%", end='')
+            
+            print(f"\n✓ 管理器下载完成：{manager_exe}")
+        else:
+            print(f"✗ 下载失败：HTTP {response.status_code}")
+            
+    except Exception as e:
+        print(f"✗ 下载异常：{e}")
+        print("请手动下载管理器到项目目录")
 
 
 # 加载配置

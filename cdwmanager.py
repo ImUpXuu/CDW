@@ -11,7 +11,6 @@ import sys
 import os
 import json
 import subprocess
-import winreg
 from pathlib import Path
 from datetime import datetime
 
@@ -38,6 +37,7 @@ def get_resource_path(filename):
         return Path(__file__).parent / filename
 
 CONFIG_FILE = get_resource_path("cdw.json")
+WALLPAPER_EXE = get_resource_path("CountdownWallpaper.exe")
 WALLPAPER_SCRIPT = get_resource_path("CountdownWallpaper.py")
 
 # 默认配置
@@ -81,58 +81,7 @@ def save_config(config):
         json.dump(config, f, ensure_ascii=False, indent=4)
 
 
-def register_auto_start(enable=True):
-    """注册开机自启（通过注册表）"""
-    try:
-        key_path = r"Software\Microsoft\Windows\CurrentVersion\Run"
-        key_name = "CountdownWallpaper"
-        
-        if enable:
-            # 添加开机自启
-            exe_path = sys.executable
-            script_path = str(WALLPAPER_SCRIPT.absolute())
-            command = f'"{exe_path}" "{script_path}"'
-            
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
-            winreg.SetValueEx(key, key_name, 0, winreg.REG_SZ, command)
-            winreg.CloseKey(key)
-            return True
-        else:
-            # 移除开机自启
-            try:
-                key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path, 0, winreg.KEY_SET_VALUE)
-                winreg.DeleteValue(key, key_name)
-                winreg.CloseKey(key)
-                return True
-            except FileNotFoundError:
-                return True
-    except Exception as e:
-        print(f"注册表操作失败：{e}")
-        return False
 
-
-def create_scheduled_task(time="07:40"):
-    """创建定时任务"""
-    try:
-        task_name = "CountdownWallpaper"
-        exe_path = sys.executable
-        script_path = str(WALLPAPER_SCRIPT.absolute())
-        
-        # 先删除旧任务
-        subprocess.run(['schtasks', '/delete', '/tn', task_name, '/f'], 
-                      capture_output=True, timeout=10)
-        
-        # 创建新任务
-        cmd = [
-            'schtasks', '/create', '/tn', task_name,
-            '/tr', f'"{exe_path}" "{script_path}"',
-            '/sc', 'daily', '/st', time, '/f'
-        ]
-        
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
-        return result.returncode == 0
-    except:
-        return False
 
 
 class CountdownManager(QMainWindow):
@@ -182,9 +131,6 @@ class CountdownManager(QMainWindow):
         self.update_time_edit.setPlaceholderText('HH:MM (24 小时制)')
         settings_layout.addRow('更新时间:', self.update_time_edit)
         
-        self.auto_start_check = QCheckBox('开机自启')
-        settings_layout.addRow(self.auto_start_check)
-        
         self.hitokoto_check = QCheckBox('启用一言 API')
         settings_layout.addRow(self.hitokoto_check)
         
@@ -229,7 +175,6 @@ class CountdownManager(QMainWindow):
         # 加载设置
         wallpaper = self.config.get('wallpaper', {})
         self.update_time_edit.setText(wallpaper.get('update_time', '07:40'))
-        self.auto_start_check.setChecked(wallpaper.get('auto_start', False))
         
         hitokoto = self.config.get('hitokoto', {})
         self.hitokoto_check.setChecked(hitokoto.get('enabled', True))
@@ -277,7 +222,7 @@ class CountdownManager(QMainWindow):
         # 保存壁纸设置
         self.config['wallpaper'] = {
             'update_time': self.update_time_edit.text(),
-            'auto_start': self.auto_start_check.isChecked(),
+            'auto_start': True,  # 始终开启
             'font_path': 'font.ttf',
             'theme': 'blue'
         }
@@ -291,19 +236,18 @@ class CountdownManager(QMainWindow):
         # 保存配置文件
         save_config(self.config)
         
-        # 设置开机自启
-        auto_start = self.auto_start_check.isChecked()
-        register_auto_start(auto_start)
-        
-        # 创建定时任务
-        if self.update_time_edit.text():
-            create_scheduled_task(self.update_time_edit.text())
+
         
         QMessageBox.information(self, '保存成功', '配置已保存！\n即将启动壁纸生成器...')
         
-        # 启动壁纸生成器
+        # 启动壁纸生成器（优先使用 exe）
         try:
-            subprocess.Popen([sys.executable, str(WALLPAPER_SCRIPT)])
+            if WALLPAPER_EXE.exists():
+                subprocess.Popen([str(WALLPAPER_EXE)])
+                print("已启动 CountdownWallpaper.exe")
+            else:
+                subprocess.Popen([sys.executable, str(WALLPAPER_SCRIPT)])
+                print("已启动 CountdownWallpaper.py")
         except Exception as e:
             print(f"启动壁纸生成器失败：{e}")
         
