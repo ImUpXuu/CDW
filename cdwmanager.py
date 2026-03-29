@@ -278,7 +278,11 @@ class CountdownManager(QMainWindow):
         # 保存配置文件
         save_config(self.config)
         
-
+        # 设置开机自启（注册表）
+        if self.auto_start_check.isChecked():
+            register_auto_start(True)
+        else:
+            register_auto_start(False)
         
         QMessageBox.information(self, '保存成功', '配置已保存！\n即将启动壁纸生成器...')
         
