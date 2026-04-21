@@ -4,6 +4,16 @@
             "name": "地生会考",
             "date": "2026-06-23",
             "enabled": true
+        },
+        {
+            "name": "中考",
+            "date": "2026-06-25",
+            "enabled": true
+        },
+        {
+            "name": "期末",
+            "date": "2026-07-05",
+            "enabled": true
         }
     ],
     "wallpaper": {

@@ -131,8 +131,8 @@ class CountdownManager(QMainWindow):
         
     def init_ui(self):
         """初始化界面"""
-        self.setWindowTitle('倒计时壁纸管理器 v2.1.6')
-        self.setGeometry(100, 100, 600, 500)
+        self.setWindowTitle('倒计时壁纸管理器 v2.2.0')
+        self.setGeometry(100, 100, 650, 550)
         
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -144,6 +144,12 @@ class CountdownManager(QMainWindow):
         title.setFont(QFont('Microsoft YaHei', 16, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
+        
+        # 提示
+        hint_label = QLabel('💡 第一个启用的倒计时将作为主倒计时显示在中间，其他倒计时显示在右侧栏')
+        hint_label.setStyleSheet('color: #888; font-size: 12px; padding: 5px;')
+        hint_label.setWordWrap(True)
+        layout.addWidget(hint_label)
         
         # 倒计时列表
         self.countdown_table = QTableWidget()

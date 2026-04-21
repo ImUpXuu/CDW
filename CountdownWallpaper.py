@@ -5,7 +5,7 @@
 功能：生成带有倒计时和励志语录的桌面壁纸
 作者：UpXuu
 GitHub: https://github.com/ImUpXuu
-版本：2.1.6
+版本：2.2.0
 """
 
 import os
@@ -73,7 +73,6 @@ def start_manager():
             print("使用 exe 版管理器")
             subprocess.Popen([str(manager_exe)])
             print("配置管理器已启动，请完成配置后关闭管理器")
-            print("提示：配置完成后管理器将自动删除，下次启动直接生成壁纸")
         except Exception as e:
             print(f"启动管理器失败：{e}")
     else:
@@ -119,23 +118,23 @@ config = load_config()
 
 # 从配置中读取参数
 countdowns = config.get('countdowns', [])
+enabled_countdowns = []
 if countdowns:
-    # 使用第一个启用的倒计时
-    target_countdown = None
     for cd in countdowns:
         if cd.get('enabled', True):
-            target_countdown = cd
-            break
-    
-    if target_countdown:
-        TARGET_DATE = datetime.datetime.strptime(target_countdown['date'], '%Y-%m-%d').date()
-        COUNTDOWN_NAME = target_countdown.get('name', '目标')
-    else:
-        TARGET_DATE = datetime.date(2026, 6, 23)
-        COUNTDOWN_NAME = '目标'
+            enabled_countdowns.append(cd)
+
+if enabled_countdowns:
+    # 第一个作为主倒计时
+    main_countdown = enabled_countdowns[0]
+    TARGET_DATE = datetime.datetime.strptime(main_countdown['date'], '%Y-%m-%d').date()
+    COUNTDOWN_NAME = main_countdown.get('name', '目标')
+    # 其他倒计时显示在右侧
+    other_countdowns = enabled_countdowns[1:]
 else:
     TARGET_DATE = datetime.date(2026, 6, 23)
     COUNTDOWN_NAME = '目标'
+    other_countdowns = []
 
 # 一言 API 配置
 hitokoto_config = config.get('hitokoto', {})
@@ -184,6 +183,18 @@ BACKGROUND_CONFIG = {
     "color": (173, 216, 230, 180),
     "horizontal_padding": 80,
     "vertical_padding": 50,
+}
+
+SIDEBAR_CONFIG = {
+    "enabled": True,
+    "width_ratio": 0.25,
+    "padding": 30,
+    "bg_color": (25, 25, 112, 150),
+    "title_size_base": 24,
+    "days_size_base": 36,
+    "text_color": (255, 255, 255),
+    "shadow_color": (0, 0, 0, 120),
+    "spacing": 20,
 }
 
 API_CONFIG = {
@@ -418,6 +429,71 @@ class WallpaperGenerator:
         
         draw.text((x, y), refresh_text, fill=TIME_CONFIG["color"], font=time_font)
     
+    def draw_sidebar(self, draw, width, height):
+        """绘制右侧倒计时栏"""
+        if not other_countdowns or not SIDEBAR_CONFIG.get("enabled", True):
+            return
+        
+        sidebar_width = int(width * SIDEBAR_CONFIG["width_ratio"])
+        padding = int(SIDEBAR_CONFIG["padding"] * self.scale_factor)
+        spacing = int(SIDEBAR_CONFIG["spacing"] * self.scale_factor)
+        shadow_offset = int(3 * self.scale_factor)
+        
+        x_start = width - sidebar_width
+        
+        draw.rectangle([x_start, 0, width, height], fill=SIDEBAR_CONFIG["bg_color"])
+        
+        title_font_size = int(SIDEBAR_CONFIG["title_size_base"] * self.scale_factor)
+        days_font_size = int(SIDEBAR_CONFIG["days_size_base"] * self.scale_factor)
+        
+        title_font = self.get_chinese_font(title_font_size)
+        days_font = self.get_chinese_font(days_font_size)
+        days_unit_font = self.get_chinese_font(max(14, int(days_font_size * 0.5)))
+        
+        current_y = padding
+        today = datetime.date.today()
+        
+        for cd in other_countdowns:
+            cd_name = cd.get('name', '目标')
+            cd_date = datetime.datetime.strptime(cd['date'], '%Y-%m-%d').date()
+            days_left = max(0, (cd_date - today).days)
+            
+            title = f"距离{cd_name}还有"
+            title_bbox = draw.textbbox((0, 0), title, font=title_font)
+            title_w = title_bbox[2] - title_bbox[0]
+            title_h = title_bbox[3] - title_bbox[1]
+            
+            title_x = x_start + padding + (sidebar_width - padding * 2 - title_w) // 2
+            draw.text((title_x + shadow_offset, current_y + shadow_offset), title,
+                      fill=SIDEBAR_CONFIG["shadow_color"], font=title_font)
+            draw.text((title_x, current_y), title, fill=SIDEBAR_CONFIG["text_color"], font=title_font)
+            current_y += title_h + spacing // 2
+            
+            days_text = str(days_left)
+            days_bbox = draw.textbbox((0, 0), days_text, font=days_font)
+            days_w = days_bbox[2] - days_bbox[0]
+            days_h = days_bbox[3] - days_bbox[1]
+            
+            unit_text = "天"
+            unit_bbox = draw.textbbox((0, 0), unit_text, font=days_unit_font)
+            unit_w = unit_bbox[2] - unit_bbox[0]
+            unit_h = unit_bbox[3] - unit_bbox[1]
+            
+            combined_w = days_w + unit_w + int(10 * self.scale_factor)
+            combined_x = x_start + padding + (sidebar_width - padding * 2 - combined_w) // 2
+            
+            draw.text((combined_x + shadow_offset, current_y + shadow_offset), days_text,
+                      fill=SIDEBAR_CONFIG["shadow_color"], font=days_font)
+            draw.text((combined_x, current_y), days_text, fill=SIDEBAR_CONFIG["text_color"], font=days_font)
+            
+            unit_x = combined_x + days_w + int(10 * self.scale_factor)
+            unit_y = current_y + (days_h - unit_h) // 2
+            draw.text((unit_x + shadow_offset, unit_y + shadow_offset), unit_text,
+                      fill=SIDEBAR_CONFIG["shadow_color"], font=days_unit_font)
+            draw.text((unit_x, unit_y), unit_text, fill=SIDEBAR_CONFIG["text_color"], font=days_unit_font)
+            
+            current_y += days_h + spacing
+    
     def create_countdown_overlay(self, background_image):
         """创建倒计时叠加层"""
         try:
@@ -467,26 +543,33 @@ class WallpaperGenerator:
             current_y = start_y
             shadow_offset = int(4 * self.scale_factor)
             
+            has_sidebar = other_countdowns and SIDEBAR_CONFIG.get("enabled", True)
+            content_width = width
+            
+            if has_sidebar:
+                sidebar_width = int(width * SIDEBAR_CONFIG["width_ratio"])
+                content_width = width - sidebar_width
+            
             if BACKGROUND_CONFIG.get("enabled", True):
                 bg_padding_h = int(BACKGROUND_CONFIG["horizontal_padding"] * self.scale_factor)
                 bg_padding_v = int(BACKGROUND_CONFIG["vertical_padding"] * self.scale_factor)
                 bg_width = max(title_width, days_width + unit_width + int(20 * self.scale_factor),
                                week_width, inspire_width) + bg_padding_h * 2
                 bg_height = total_height + bg_padding_v * 2
-                bg_x = (width - bg_width) // 2
+                bg_x = (content_width - bg_width) // 2
                 bg_y = start_y - bg_padding_v
                 
                 draw.rectangle([bg_x, bg_y, bg_x + bg_width, bg_y + bg_height],
                                fill=BACKGROUND_CONFIG["color"])
             
-            title_x = (width - title_width) // 2
+            title_x = (content_width - title_width) // 2
             draw.text((title_x + shadow_offset, current_y + shadow_offset), title,
                       fill=COLOR_CONFIG["shadow_color"], font=title_font)
             draw.text((title_x, current_y), title, fill=COLOR_CONFIG["title_color"], font=title_font)
             current_y += title_height + title_spacing
             
             combined_width = days_width + unit_width + int(20 * self.scale_factor)
-            combined_x = (width - combined_width) // 2
+            combined_x = (content_width - combined_width) // 2
             draw.text((combined_x + shadow_offset, current_y + shadow_offset), days_text,
                       fill=COLOR_CONFIG["shadow_color"], font=days_font)
             draw.text((combined_x, current_y), days_text, fill=COLOR_CONFIG["days_color"], font=days_font)
@@ -498,16 +581,18 @@ class WallpaperGenerator:
             draw.text((unit_x, unit_y), unit_text, fill=COLOR_CONFIG["title_color"], font=unit_font)
             current_y += days_height + week_spacing
             
-            week_x = (width - week_width) // 2
+            week_x = (content_width - week_width) // 2
             draw.text((week_x + shadow_offset, current_y + shadow_offset), week_text,
                       fill=COLOR_CONFIG["shadow_color"], font=week_font)
             draw.text((week_x, current_y), week_text, fill=COLOR_CONFIG["week_color"], font=week_font)
             current_y += week_height + spacing
             
-            inspire_x = (width - inspire_width) // 2
+            inspire_x = (content_width - inspire_width) // 2
             draw.text((inspire_x + shadow_offset, current_y + shadow_offset), inspire_text,
                       fill=COLOR_CONFIG["shadow_color"], font=inspire_font)
             draw.text((inspire_x, current_y), inspire_text, fill=COLOR_CONFIG["inspire_color"], font=inspire_font)
+            
+            self.draw_sidebar(draw, width, height)
             
             copyright_height = self.draw_copyright_info(draw, width, height)
             self.draw_refresh_time(draw, width, height, copyright_height)
