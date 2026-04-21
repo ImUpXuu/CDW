@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
 ![License](https://img.shields.io/badge/License-GPL--3.0-green.svg)
-![Version](https://img.shields.io/badge/Version-2.1.6-orange.svg)
+![Version](https://img.shields.io/badge/Version-2.2.0-orange.svg)
 
 ## ✨ 功能特性
 
@@ -25,6 +25,7 @@
 - [📥 下载管理器](https://raw-githubusercontent-com-gh.2x.nz/ImUpXuu/CDW/refs/heads/main/dist/CDWManager.exe) - CDWManager.exe
 
 **使用说明：**
+
 1. 下载 `CountdownWallpaper.exe` 到任意目录
 2. 首次运行会自动下载管理器或从上方链接手动下载
 3. 使用管理器配置倒计时日期
@@ -48,6 +49,7 @@ python cdwmanager.py
 ```
 
 管理器提供图形界面，可以：
+
 - 设置倒计时名称和日期
 - 配置一言 API 参数
 - 设置开机自启（通过注册表）
@@ -105,6 +107,7 @@ countdown-wallpaper/
 ### CountdownWallpaper.py - 壁纸生成器
 
 **功能**：
+
 - 从配置文件读取倒计时信息
 - 获取 Bing 每日一图
 - 调用一言 API 获取励志语录
@@ -112,6 +115,7 @@ countdown-wallpaper/
 - 设置 Windows 壁纸
 
 **特点**：
+
 - 专注壁纸生成，无定时任务
 - 从配置文件读取所有参数
 - 简洁高效
@@ -119,6 +123,7 @@ countdown-wallpaper/
 ### cdwmanager.py - 管理器
 
 **功能**：
+
 - 图形界面配置倒计时
 - 管理多个倒计时项目
 - 配置一言 API 参数
@@ -130,18 +135,23 @@ countdown-wallpaper/
 ## 📝 常见问题
 
 ### Q: 配置文件在哪里？
+
 A: `cdw.json` 在项目根目录。首次运行管理器会自动创建。
 
 ### Q: 如何添加多个倒计时？
+
 A: 运行 `cdwmanager.py`，在"倒计时管理"标签页中添加。
 
 ### Q: 开机自启是如何实现的？
+
 A: 通过 Windows 注册表实现，位置：`HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`
 
 ### Q: 一言 API 失败怎么办？
+
 A: 程序会自动使用内置的备用诗句库。
 
 ### Q: 可以自定义壁纸样式吗？
+
 A: 可以！编辑 `cdw.json` 中的配置参数。
 
 ## 🛠️ 打包为可执行文件
@@ -178,6 +188,6 @@ pyinstaller --onefile --windowed --icon=icon.ico cdwmanager.py
 
 如果这个项目对你有帮助，请给一个 ⭐ Star 支持！
 
----
+***
 
 **让每一天的努力都闪闪发光！** ✨

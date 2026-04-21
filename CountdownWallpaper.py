@@ -32,7 +32,7 @@ def get_resource_path(filename):
 CONFIG_FILE = get_resource_path("cdw.json")
 
 print('倒计时壁纸生成器')
-print('版本：2.1.6 | 作者：UpXuu | GitHub: https://github.com/ImUpXuu')
+print('版本：2.2.0 | 作者：UpXuu | GitHub: https://github.com/ImUpXuu')
 print('=' * 60)
 
 
@@ -187,14 +187,14 @@ BACKGROUND_CONFIG = {
 
 SIDEBAR_CONFIG = {
     "enabled": True,
-    "width_ratio": 0.25,
-    "padding": 30,
-    "bg_color": (25, 25, 112, 150),
-    "title_size_base": 24,
-    "days_size_base": 36,
+    "width": 200,
+    "padding": 20,
+    "bg_color": (25, 25, 112, 120),
+    "title_size_base": 16,
+    "days_size_base": 24,
     "text_color": (255, 255, 255),
     "shadow_color": (0, 0, 0, 120),
-    "spacing": 20,
+    "spacing": 15,
 }
 
 API_CONFIG = {
@@ -434,21 +434,28 @@ class WallpaperGenerator:
         if not other_countdowns or not SIDEBAR_CONFIG.get("enabled", True):
             return
         
-        sidebar_width = int(width * SIDEBAR_CONFIG["width_ratio"])
-        padding = int(SIDEBAR_CONFIG["padding"] * self.scale_factor)
-        spacing = int(SIDEBAR_CONFIG["spacing"] * self.scale_factor)
-        shadow_offset = int(3 * self.scale_factor)
+        sidebar_width = SIDEBAR_CONFIG["width"]
+        padding = SIDEBAR_CONFIG["padding"]
+        spacing = SIDEBAR_CONFIG["spacing"]
+        shadow_offset = 2
         
         x_start = width - sidebar_width
         
-        draw.rectangle([x_start, 0, width, height], fill=SIDEBAR_CONFIG["bg_color"])
+        sidebar_height = height
+        x_end = width
+        y_start = 0
+        y_end = height
         
-        title_font_size = int(SIDEBAR_CONFIG["title_size_base"] * self.scale_factor)
-        days_font_size = int(SIDEBAR_CONFIG["days_size_base"] * self.scale_factor)
+        for i in range(0, sidebar_width, 2):
+            alpha = int(120 * (1 - i / sidebar_width))
+            draw.line([(x_start + i, y_start), (x_start + i, y_end)], fill=(25, 25, 112, alpha))
+        
+        title_font_size = SIDEBAR_CONFIG["title_size_base"]
+        days_font_size = SIDEBAR_CONFIG["days_size_base"]
         
         title_font = self.get_chinese_font(title_font_size)
         days_font = self.get_chinese_font(days_font_size)
-        days_unit_font = self.get_chinese_font(max(14, int(days_font_size * 0.5)))
+        days_unit_font = self.get_chinese_font(max(12, int(days_font_size * 0.5)))
         
         current_y = padding
         today = datetime.date.today()
@@ -458,12 +465,12 @@ class WallpaperGenerator:
             cd_date = datetime.datetime.strptime(cd['date'], '%Y-%m-%d').date()
             days_left = max(0, (cd_date - today).days)
             
-            title = f"距离{cd_name}还有"
+            title = f"距{cd_name}"
             title_bbox = draw.textbbox((0, 0), title, font=title_font)
             title_w = title_bbox[2] - title_bbox[0]
             title_h = title_bbox[3] - title_bbox[1]
             
-            title_x = x_start + padding + (sidebar_width - padding * 2 - title_w) // 2
+            title_x = x_start + (sidebar_width - title_w) // 2
             draw.text((title_x + shadow_offset, current_y + shadow_offset), title,
                       fill=SIDEBAR_CONFIG["shadow_color"], font=title_font)
             draw.text((title_x, current_y), title, fill=SIDEBAR_CONFIG["text_color"], font=title_font)
@@ -479,14 +486,14 @@ class WallpaperGenerator:
             unit_w = unit_bbox[2] - unit_bbox[0]
             unit_h = unit_bbox[3] - unit_bbox[1]
             
-            combined_w = days_w + unit_w + int(10 * self.scale_factor)
-            combined_x = x_start + padding + (sidebar_width - padding * 2 - combined_w) // 2
+            combined_w = days_w + unit_w + 5
+            combined_x = x_start + (sidebar_width - combined_w) // 2
             
             draw.text((combined_x + shadow_offset, current_y + shadow_offset), days_text,
                       fill=SIDEBAR_CONFIG["shadow_color"], font=days_font)
             draw.text((combined_x, current_y), days_text, fill=SIDEBAR_CONFIG["text_color"], font=days_font)
             
-            unit_x = combined_x + days_w + int(10 * self.scale_factor)
+            unit_x = combined_x + days_w + 5
             unit_y = current_y + (days_h - unit_h) // 2
             draw.text((unit_x + shadow_offset, unit_y + shadow_offset), unit_text,
                       fill=SIDEBAR_CONFIG["shadow_color"], font=days_unit_font)
@@ -543,33 +550,26 @@ class WallpaperGenerator:
             current_y = start_y
             shadow_offset = int(4 * self.scale_factor)
             
-            has_sidebar = other_countdowns and SIDEBAR_CONFIG.get("enabled", True)
-            content_width = width
-            
-            if has_sidebar:
-                sidebar_width = int(width * SIDEBAR_CONFIG["width_ratio"])
-                content_width = width - sidebar_width
-            
             if BACKGROUND_CONFIG.get("enabled", True):
                 bg_padding_h = int(BACKGROUND_CONFIG["horizontal_padding"] * self.scale_factor)
                 bg_padding_v = int(BACKGROUND_CONFIG["vertical_padding"] * self.scale_factor)
                 bg_width = max(title_width, days_width + unit_width + int(20 * self.scale_factor),
                                week_width, inspire_width) + bg_padding_h * 2
                 bg_height = total_height + bg_padding_v * 2
-                bg_x = (content_width - bg_width) // 2
+                bg_x = (width - bg_width) // 2
                 bg_y = start_y - bg_padding_v
                 
                 draw.rectangle([bg_x, bg_y, bg_x + bg_width, bg_y + bg_height],
                                fill=BACKGROUND_CONFIG["color"])
             
-            title_x = (content_width - title_width) // 2
+            title_x = (width - title_width) // 2
             draw.text((title_x + shadow_offset, current_y + shadow_offset), title,
                       fill=COLOR_CONFIG["shadow_color"], font=title_font)
             draw.text((title_x, current_y), title, fill=COLOR_CONFIG["title_color"], font=title_font)
             current_y += title_height + title_spacing
             
             combined_width = days_width + unit_width + int(20 * self.scale_factor)
-            combined_x = (content_width - combined_width) // 2
+            combined_x = (width - combined_width) // 2
             draw.text((combined_x + shadow_offset, current_y + shadow_offset), days_text,
                       fill=COLOR_CONFIG["shadow_color"], font=days_font)
             draw.text((combined_x, current_y), days_text, fill=COLOR_CONFIG["days_color"], font=days_font)
@@ -581,13 +581,13 @@ class WallpaperGenerator:
             draw.text((unit_x, unit_y), unit_text, fill=COLOR_CONFIG["title_color"], font=unit_font)
             current_y += days_height + week_spacing
             
-            week_x = (content_width - week_width) // 2
+            week_x = (width - week_width) // 2
             draw.text((week_x + shadow_offset, current_y + shadow_offset), week_text,
                       fill=COLOR_CONFIG["shadow_color"], font=week_font)
             draw.text((week_x, current_y), week_text, fill=COLOR_CONFIG["week_color"], font=week_font)
             current_y += week_height + spacing
             
-            inspire_x = (content_width - inspire_width) // 2
+            inspire_x = (width - inspire_width) // 2
             draw.text((inspire_x + shadow_offset, current_y + shadow_offset), inspire_text,
                       fill=COLOR_CONFIG["shadow_color"], font=inspire_font)
             draw.text((inspire_x, current_y), inspire_text, fill=COLOR_CONFIG["inspire_color"], font=inspire_font)
