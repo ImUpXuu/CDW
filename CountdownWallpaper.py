@@ -510,22 +510,68 @@ class WallpaperGenerator:
             current_y += inspire_height + spacing * 2
             
             if other_countdowns:
-                other_font_size = max(14, int(self.font_sizes["inspire_size"] * 0.8))
-                other_font = self.get_chinese_font(other_font_size)
+                other_title_size = max(16, int(self.font_sizes["title_size"] * 0.5))
+                other_days_size = max(28, int(self.font_sizes["days_size"] * 0.5))
+                other_unit_size = max(14, int(self.font_sizes["unit_size"] * 0.5))
+                
+                other_title_font = self.get_chinese_font(other_title_size)
+                other_days_font = self.get_chinese_font(other_days_size)
+                other_unit_font = self.get_chinese_font(other_unit_size)
                 today = datetime.date.today()
+                
+                other_spacing = int(15 * self.scale_factor)
+                other_bg_height = 0
+                other_texts = []
                 
                 for cd in other_countdowns:
                     cd_name = cd.get('name', '目标')
                     cd_date = datetime.datetime.strptime(cd['date'], '%Y-%m-%d').date()
                     cd_days = max(0, (cd_date - today).days)
                     
-                    other_text = f"{cd_name}：还剩 {cd_days} 天"
-                    other_bbox = draw.textbbox((0, 0), other_text, font=other_font)
-                    other_width = other_bbox[2] - other_bbox[0]
-                    other_x = (width - other_width) // 2
+                    cd_title = f"距{cd_name}"
+                    cd_days_text = f"{cd_days}"
+                    cd_unit = "天"
                     
-                    draw.text((other_x, current_y), other_text, fill=COLOR_CONFIG["inspire_color"], font=other_font)
-                    current_y += other_font_size + spacing
+                    cd_title_bbox = draw.textbbox((0, 0), cd_title, font=other_title_font)
+                    cd_days_bbox = draw.textbbox((0, 0), cd_days_text, font=other_days_font)
+                    cd_unit_bbox = draw.textbbox((0, 0), cd_unit, font=other_unit_font)
+                    
+                    cd_title_w = cd_title_bbox[2] - cd_title_bbox[0]
+                    cd_title_h = cd_title_bbox[3] - cd_title_bbox[1]
+                    cd_days_w = cd_days_bbox[2] - cd_days_bbox[0]
+                    cd_days_h = cd_days_bbox[3] - cd_days_bbox[1]
+                    cd_unit_w = cd_unit_bbox[2] - cd_unit_bbox[0]
+                    cd_unit_h = cd_unit_bbox[3] - cd_unit_bbox[1]
+                    
+                    combined_w = cd_days_w + cd_unit_w + int(10 * self.scale_factor)
+                    line_w = max(cd_title_w, combined_w)
+                    
+                    other_bg_height += cd_title_h + cd_days_h + other_spacing * 2
+                    other_texts.append((cd_title, cd_days_text, cd_unit, cd_title_w, cd_days_w, cd_title_h, cd_days_h, line_w))
+                
+                if BACKGROUND_CONFIG.get("enabled", True):
+                    other_bg_padding = int(15 * self.scale_factor)
+                    other_bg_width = max(title_width, days_width + unit_width + int(20 * self.scale_factor),
+                                        week_width, inspire_width, 
+                                        max(t[7] for t in other_texts) if other_texts else 0) + other_bg_padding * 2
+                    other_bg_x = (width - other_bg_width) // 2
+                    other_bg_y = current_y - other_bg_padding
+                    
+                    draw.rectangle([other_bg_x, other_bg_y, other_bg_x + other_bg_width, other_bg_y + other_bg_height + other_bg_padding * 2],
+                                 fill=BACKGROUND_CONFIG["color"])
+                
+                for i, (cd_title, cd_days_text, cd_unit, cd_title_w, cd_days_w, cd_title_h, cd_days_h, line_w) in enumerate(other_texts):
+                    cd_title_x = (width - line_w) // 2
+                    draw.text((cd_title_x, current_y), cd_title, fill=COLOR_CONFIG["title_color"], font=other_title_font)
+                    current_y += cd_title_h + int(5 * self.scale_factor)
+                    
+                    cd_days_x = (width - line_w) // 2
+                    draw.text((cd_days_x, current_y), cd_days_text, fill=COLOR_CONFIG["days_color"], font=other_days_font)
+                    
+                    cd_unit_x = cd_days_x + cd_days_w + int(10 * self.scale_factor)
+                    cd_unit_y = current_y + (cd_days_h - cd_unit_h) // 2
+                    draw.text((cd_unit_x, cd_unit_y), cd_unit, fill=COLOR_CONFIG["title_color"], font=other_unit_font)
+                    current_y += cd_days_h + other_spacing
             
             copyright_height = self.draw_copyright_info(draw, width, height)
             self.draw_refresh_time(draw, width, height, copyright_height)
