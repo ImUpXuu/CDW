@@ -185,16 +185,6 @@ BACKGROUND_CONFIG = {
     "vertical_padding": 50,
 }
 
-SIDEBAR_CONFIG = {
-    "enabled": True,
-    "width": 150,
-    "bg_color": (10, 10, 50, 180),
-    "title_size": 14,
-    "days_size": 20,
-    "text_color": (255, 255, 255),
-    "spacing": 25,
-}
-
 API_CONFIG = {
     "bing_urls": [
         "https://bing.img.run/uhd.php",
@@ -427,44 +417,6 @@ class WallpaperGenerator:
         
         draw.text((x, y), refresh_text, fill=TIME_CONFIG["color"], font=time_font)
     
-    def draw_sidebar(self, draw, width, height):
-        """绘制右侧倒计时栏"""
-        if not other_countdowns or not SIDEBAR_CONFIG.get("enabled", True):
-            return
-        
-        sidebar_w = SIDEBAR_CONFIG["width"]
-        x_start = width - sidebar_w
-        
-        draw.rectangle([x_start, 0, width, height], fill=SIDEBAR_CONFIG["bg_color"])
-        
-        title_font = self.get_chinese_font(SIDEBAR_CONFIG["title_size"])
-        days_font = self.get_chinese_font(SIDEBAR_CONFIG["days_size"])
-        unit_font = self.get_chinese_font(max(10, SIDEBAR_CONFIG["days_size"] // 2))
-        
-        current_y = 30
-        today = datetime.date.today()
-        
-        for cd in other_countdowns:
-            cd_name = cd.get('name', '目标')[:4]
-            cd_date = datetime.datetime.strptime(cd['date'], '%Y-%m-%d').date()
-            days_left = max(0, (cd_date - today).days)
-            
-            title_text = f"距{cd_name}"
-            days_text = f"{days_left}天"
-            
-            title_bbox = draw.textbbox((0, 0), title_text, font=title_font)
-            title_h = title_bbox[3] - title_bbox[1]
-            
-            title_x = x_start + 10
-            draw.text((title_x, current_y), title_text, fill=SIDEBAR_CONFIG["text_color"], font=title_font)
-            current_y += title_h + 5
-            
-            days_bbox = draw.textbbox((0, 0), days_text, font=days_font)
-            days_w = days_bbox[2] - days_bbox[0]
-            days_x = x_start + (sidebar_w - days_w) // 2
-            draw.text((days_x, current_y), days_text, fill=SIDEBAR_CONFIG["text_color"], font=days_font)
-            current_y += SIDEBAR_CONFIG["days_size"] + SIDEBAR_CONFIG["spacing"]
-    
     def create_countdown_overlay(self, background_image):
         """创建倒计时叠加层"""
         try:
@@ -555,8 +507,25 @@ class WallpaperGenerator:
             draw.text((inspire_x + shadow_offset, current_y + shadow_offset), inspire_text,
                       fill=COLOR_CONFIG["shadow_color"], font=inspire_font)
             draw.text((inspire_x, current_y), inspire_text, fill=COLOR_CONFIG["inspire_color"], font=inspire_font)
+            current_y += inspire_height + spacing * 2
             
-            self.draw_sidebar(draw, width, height)
+            if other_countdowns:
+                other_font_size = max(14, int(self.font_sizes["inspire_size"] * 0.8))
+                other_font = self.get_chinese_font(other_font_size)
+                today = datetime.date.today()
+                
+                for cd in other_countdowns:
+                    cd_name = cd.get('name', '目标')
+                    cd_date = datetime.datetime.strptime(cd['date'], '%Y-%m-%d').date()
+                    cd_days = max(0, (cd_date - today).days)
+                    
+                    other_text = f"{cd_name}：还剩 {cd_days} 天"
+                    other_bbox = draw.textbbox((0, 0), other_text, font=other_font)
+                    other_width = other_bbox[2] - other_bbox[0]
+                    other_x = (width - other_width) // 2
+                    
+                    draw.text((other_x, current_y), other_text, fill=COLOR_CONFIG["inspire_color"], font=other_font)
+                    current_y += other_font_size + spacing
             
             copyright_height = self.draw_copyright_info(draw, width, height)
             self.draw_refresh_time(draw, width, height, copyright_height)
